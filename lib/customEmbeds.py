@@ -44,7 +44,7 @@ def generateDebugEmbed(latency: int, uptime: int) -> discord.Embed:
 
     return embed
 
-def genereateWordEmbed(word: Word) -> discord.Embed:
+def generateWordEmbed(word: Word) -> discord.Embed:
     embed = discord.Embed(
         color=discord.Color.red()
     )
@@ -136,7 +136,7 @@ def generateGrammarEmbed(grammar: Grammar) -> discord.Embed:
     return embed
 
 def generateDailyWordEmbed(index: int, word: Word) -> discord.Embed:
-    embed: discord.Embed = genereateWordEmbed(word)
+    embed: discord.Embed = generateWordEmbed(word)
     embed.title = f"Daily Word Day {index+1}"
     return embed
 

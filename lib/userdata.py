@@ -47,6 +47,9 @@ class UserDataHandler:
     def _ensure_user_exist(self, user: discord.User):
         if not str(user.id) in self.data:
             self.data[str(user.id)] = self.fields
+            self.data[str(user.id)]["username"] = user.name 
+            self.data[str(user.id)]["nickname"] = user.nick
+            log(f"User {user.name} was created in user database.")
     
     def incrementTranslationCount(self, user: discord.User):
         self._ensure_user_exist(user)
@@ -54,7 +57,7 @@ class UserDataHandler:
         self.data[str(user.id)]["translations"] += 1
 
         self._save_user_data()
-        log(f"User {user.name} updated successfully.")
+        log(f"User {user.name} translation count updated successfully.")
     
     def getUser(self, user: discord.user):
         self._ensure_user_exist(user)

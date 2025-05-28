@@ -1,5 +1,7 @@
 import csv
 
+from lib.myLogging import log
+
 class JapaneseData:
     def __init__(self):
         self.words: Word = []
@@ -9,9 +11,9 @@ class JapaneseData:
         self._grammar_dict = {}
         self._literature_dict = {}
         self.__load_core_6000__()
-        self.__load_frequency__()
+        # self.__load_frequency__()
         self.__load_grammar__()
-        self.__load_literature__()
+        # self.__load_literature__()
         self.__create_word_bank__()
         # self.__create_frequency_bank__()
         self.__create_grammar_bank__()
@@ -24,6 +26,7 @@ class JapaneseData:
             for row in reader:
                 key = row[0]
                 self._core6000_dict[key] = {headers[i]: row[i] for i in range(1, len(headers))}
+        log("Core6000 (words) successfully loaded into dict.")
     
     def __load_frequency__(self):
         with open("./data/japanese/frequency.csv","r", encoding="utf-8") as file:
@@ -40,7 +43,8 @@ class JapaneseData:
             for row in reader:
                 key = row[0]
                 self._grammar_dict[key] = {headers[i]: row[i] for i in range(1, len(headers))}
-
+        log("Grammar successfully loaded into dict.")
+        
     def __load_literature__(self):
         with open("./data/japanese/literature.csv", "r", encoding="utf-8") as file:
             reader = csv.reader(file)
@@ -54,12 +58,14 @@ class JapaneseData:
         for word in word_dicts:
             self.words.append(Word(word))
         self._core6000_dict.clear()
+        log("All word objects successfully created.")
         
     def __create_grammar_bank__(self):
         grammar_dicts = [self._grammar_dict[i] for i in self._grammar_dict]
         for grammar in grammar_dicts:
             self.grammar.append(Grammar(grammar))
         self._grammar_dict.clear()
+        log("All grammar objects successfully created.")
 
 class Word:
     def __init__(self, data: dict):

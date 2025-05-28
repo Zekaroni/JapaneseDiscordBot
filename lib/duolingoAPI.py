@@ -1,6 +1,9 @@
 import requests
 import json
+import os
 from bs4 import BeautifulSoup
+
+# TODO | NOTE: This is not used yet.
 
 class DuolingoScraper:
     def __init__(self, username: str):
@@ -35,7 +38,9 @@ class DuolingoScraper:
         response = requests.get(url, headers=self.headers)
         if response.status_code == 200:
             self.user_data = response.json()
-            with open(f'./data/duoUsers/{self.username}.json', 'w') as json_file:
+            directory = f'./data/duoUsers'
+            os.makedirs(directory, exist_ok=True)
+            with open(f'{directory}/{self.username}.json', 'w') as json_file:
                 json.dump(self.user_data, json_file, indent=4)
             return True
         else:

@@ -17,7 +17,7 @@ class CustomTranslator:
         result = self.translator.translate(text, dest="ja", src="en")
         return result.text
     
-    def translate(self, text: str) -> tuple[str, tuple[str, str]]:
+    def translate(self, text: str) -> tuple[str, tuple[str, str]] | None:
         """
         param text: Input sentence to be auto-detected and translated.
 

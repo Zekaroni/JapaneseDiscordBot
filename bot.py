@@ -1,11 +1,11 @@
 import discord
-from discord import app_commands
 from discord.ext import commands, tasks
 from time import time
 from datetime import timedelta
 from os import path
 import datetime
 import asyncio
+import subprocess
 
 from lib.myLogging import log
 from lib.initConfig import importConfig
@@ -14,6 +14,7 @@ from lib.userdata import UserDataHandler
 from lib.customEmbeds import *
 from lib.botdata import BotData
 from lib.japanesedata import JapaneseData
+from lib.botutil import updateBot
 
 BOOT_TIME = time()
 translator = CustomTranslator()
@@ -36,7 +37,7 @@ bot = commands.Bot(command_prefix=">", intents=intents)
 async def on_ready():
     try:
         await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
-        log(f"Logged in as {bot.user}.")
+        log(f"~~~ Logged in as {bot.user}. ~~~")
         try:
             asyncio.create_task(initializeTimedEvents());
             log(f"Created hook for looping tasks.")
@@ -45,11 +46,26 @@ async def on_ready():
     except Exception as e:
         log(f"Failed to sync commands: {e}")
 
-@bot.tree.command(name="test-grammer", description="Grammar Embed Test", guild=discord.Object(id=GUILD_ID))
-async def test_grammar(interaction: discord.Interaction):
-    grammarEmbed = generateGrammarEmbed(japaneseData.grammar[0])
-    await interaction.response.send_message(embed=grammarEmbed)
+@bot.tree.command(name="translate", description="Auto-detects and translates sentences.", guild=discord.Object(id=GUILD_ID))
+async def botTranslate(interaction: discord.Interaction, passage: str):
+    await interaction.response.send_message("Processing your request...", ephemeral=True, delete_after=3)
 
+    result = translator.translate(passage)
+    if result == None:
+        await interaction.channel.send(f"Prompt: {passage}\nNeither English or Japanese deteced.")
+        return
+    
+    nickname = interaction.user.nick
+    
+    languageEmbed = generateTranslationEmbed(result, passage, nickname, interaction)
+
+    userdataHandler.incrementTranslationCount(interaction.user)
+
+    log(
+        (nickname if nickname else interaction.user.name) + " used /translate : " + passage + "  -->  " + result[0]
+    )
+
+    await interaction.channel.send(embed=languageEmbed)
 
 @bot.command(name="debug")
 async def debug(ctx: commands.context):
@@ -77,11 +93,11 @@ async def getData(ctx: commands.Context):
     log(f"User {ctx.author.name} used getData.")
     if userdataHandler.getUser(ctx.author)["admin"]:
         if path.exists("./data/userdata.json"):
-            userdataFile = discord.File("./data/userdata.json", filename=f"{int(time())}.json")
+            userdataFile = discord.File("./data/userdata.json", filename=f"user{int(time())}.json")
             await ctx.author.send(file = userdataFile)
             log(f"User data sent to {ctx.author.name}.")
         if path.exists("./data/botdata.json"):
-            botdataFile = discord.File("./data/botdata.json", filename=f"{int(time())}.json")
+            botdataFile = discord.File("./data/botdata.json", filename=f"bot{int(time())}.json")
             await ctx.author.send(file = botdataFile)
             log(f"Bot data sent to {ctx.author.name}.")
     else:
@@ -97,8 +113,26 @@ async def getLog(ctx: commands.Context):
             await ctx.author.send(file = logFile)
             log(f"Log data sent to {ctx.author.name}.")
     else:
+        log(f"User {ctx.author.name} does not have permission.")
         await ctx.send("You do not have permission access the log.", delete_after = 5)
     await ctx.message.delete()
+
+@bot.command(name = "update")
+async def update(ctx: commands.Context):
+    log(f"User {ctx.author.name} used update.")
+    if userdataHandler.getUser(ctx.author)["admin"]:
+        if updateBot():
+            log(f"Bot has been updated.")
+            log(f"Restarting the bot.")
+            await ctx.channel.send("Restarting the bot.")
+            await ctx.bot.close()
+            subprocess.Popen([".venv\Scripts\python.exe","bot.py"])
+            exit(0)
+    else:
+        log(f"User {ctx.author.name} does not have permission.")
+        await ctx.send("You do not have permission update the bot.", delete_after = 5)
+    await ctx.message.delete()
+
 
 # @bot.tree.command(name="reload", description="Reloads various parts of the bot.", guild=discord.Object(id=GUILD_ID))
 # async def reload(interaction: discord.Interaction):
@@ -135,7 +169,8 @@ async def initializeTimedEvents():
     targetTime = now.replace(hour=botData.taskHour, minute=0, second=0, microsecond=0)
     if targetTime < now:
         targetTime += datetime.timedelta(days=1)
-    delay = (targetTime - now).total_seconds()
+    # delay = (targetTime - now).total_seconds()
+    delay = 0
     log(f"Dailies initalized and will start in {delay} seconds.")
     await asyncio.sleep(delay)
     japaneseDailies.start()
