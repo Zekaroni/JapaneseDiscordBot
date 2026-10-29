@@ -9,6 +9,14 @@ class BotData:
         self.data = self.__populate_data__()
 
     def __populate_data__(self):
+        starter_data = {
+            "TaskHour": 8,
+            "DailyWordIndex": 0,
+            "DailyGrammarIndex": 0,
+            "DailyWordChannelID": 0,
+            "DailyGrammarChannelID": 0
+        }
+        
         try:
             with open(self.filename, "r", encoding="utf-8") as file:
                 _data = json.load(file)
@@ -18,16 +26,18 @@ class BotData:
             if isinstance(e, FileNotFoundError):
                 os.makedirs(os.path.dirname(self.filename), exist_ok=True)
                 with open(self.filename, "w", encoding="utf-8") as file:
-                    json.dump({}, file)
-                log("No bot data found. New data file created.")
-                return {}
+                    json.dump(starter_data, file, indent=4, ensure_ascii=False)
+                log("No bot data found. New data file created with starter values.")
+                return starter_data
             elif isinstance(e, json.JSONDecodeError):
                 log("Critical error reading bot data. Creating backup of damaged data.")
                 with open(self.filename, "r", encoding="utf-8") as file:
                     _data = file.read()
                 with open("./data/damagedBotData.json", "w", encoding="utf-8") as backup:
                     backup.write(_data)
-                return {}
+                with open(self.filename, "w", encoding="utf-8") as file:
+                    json.dump(starter_data, file, indent=4, ensure_ascii=False)
+                return starter_data
     
     def _save_bot_data(self):
         with open(self.filename, "w", encoding="utf-8") as file:
@@ -75,4 +85,3 @@ class BotData:
         self.dailyGrammarIndex += 1
         log(f"Daily grammar count was incremented to {self.dailyGrammarIndex}.")
         self._save_bot_data()
-
