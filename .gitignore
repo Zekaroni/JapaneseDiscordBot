@@ -1,4 +1,5 @@
 .venv
+.python-version
 data/bodata.json
 data/userdata.json
 lib/__pycache__

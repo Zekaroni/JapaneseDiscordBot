@@ -117,21 +117,6 @@ async def getLog(ctx: commands.Context):
         await ctx.send("You do not have permission access the log.", delete_after = 5)
     await ctx.message.delete()
 
-@bot.command(name = "update")
-async def update(ctx: commands.Context):
-    log(f"User {ctx.author.name} used update.")
-    if userdataHandler.getUser(ctx.author)["admin"]:
-        if updateBot():
-            log(f"Bot has been updated.")
-            log(f"Restarting the bot.")
-            await ctx.channel.send("Restarting the bot.")
-            await ctx.bot.close()
-            subprocess.Popen([".venv\Scripts\python.exe","bot.py"])
-            exit(0)
-    else:
-        log(f"User {ctx.author.name} does not have permission.")
-        await ctx.send("You do not have permission update the bot.", delete_after = 5)
-    await ctx.message.delete()
 
 
 # @bot.tree.command(name="reload", description="Reloads various parts of the bot.", guild=discord.Object(id=GUILD_ID))
